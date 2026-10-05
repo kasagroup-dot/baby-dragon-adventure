@@ -610,21 +610,35 @@ function part(geo, material, x = 0, y = 0, z = 0, sx = 1, sy = sx, sz = sx, pare
 function grp(x = 0, y = 0, z = 0, parent) { const g = new THREE.Group(); g.position.set(x, y, z); if (parent) parent.add(g); return g; }
 function shadowAll(obj) { obj.traverse(o => { if (o.isMesh) { o.castShadow = true; } }); }
 
-/* ---------- Baby dragon "Mimo" ---------- */
+/* ---------- Naga superhero "Mimo" ---------- */
+function bone(a, b, r, material, parent) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy);
+  const m = new THREE.Mesh(G.cyl, material);
+  m.scale.set(r, len, r);
+  m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0);
+  m.rotation.z = -Math.atan2(dx, dy);
+  parent.add(m);
+  return m;
+}
+
 function makeDragon() {
   const M = {
-    skin: new THREE.MeshPhysicalMaterial({ color: 0x86d47f, roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.45, bumpMap: TEX.scales, bumpScale: 0.006 }),
-    skinDark: new THREE.MeshPhysicalMaterial({ color: 0x5fb86a, roughness: 0.55, clearcoat: 0.15, clearcoatRoughness: 0.5, bumpMap: TEX.scales, bumpScale: 0.006 }),
-    belly: new THREE.MeshStandardMaterial({ color: 0xfff0cc, roughness: 0.6, bumpMap: TEX.noise, bumpScale: 0.002 }),
-    snout: new THREE.MeshStandardMaterial({ color: 0xaee6a4, roughness: 0.55 }),
-    horn: new THREE.MeshStandardMaterial({ color: 0xfff1d0, roughness: 0.45 }),
-    cheek: new THREE.MeshStandardMaterial({ color: 0xff9fb3, roughness: 0.7, transparent: true, opacity: 0.85 }),
-    white: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 }),
-    iris: new THREE.MeshPhysicalMaterial({ color: 0x3a2a1e, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.05 }),
-    pupil: new THREE.MeshPhysicalMaterial({ color: 0x0f0b08, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 }),
+    skin: new THREE.MeshPhysicalMaterial({ color: 0x2fb36a, roughness: 0.5, clearcoat: 0.25, clearcoatRoughness: 0.4, bumpMap: TEX.scales, bumpScale: 0.0015 }),
+    skinDark: new THREE.MeshPhysicalMaterial({ color: 0x1d8f54, roughness: 0.5, clearcoat: 0.2, clearcoatRoughness: 0.5, bumpMap: TEX.scales, bumpScale: 0.0015 }),
+    belly: new THREE.MeshStandardMaterial({ color: 0xffe9b8, roughness: 0.55, bumpMap: TEX.noise, bumpScale: 0.002 }),
+    snout: new THREE.MeshStandardMaterial({ color: 0x59cf86, roughness: 0.5 }),
+    gold: new THREE.MeshStandardMaterial({ color: 0xffc83d, roughness: 0.28, metalness: 0.6 }),
+    red: new THREE.MeshStandardMaterial({ color: 0xd62839, roughness: 0.4, metalness: 0.05 }),
+    redDark: new THREE.MeshStandardMaterial({ color: 0x8f1627, roughness: 0.5 }),
+    horn: new THREE.MeshStandardMaterial({ color: 0xffe3a0, roughness: 0.3, metalness: 0.25 }),
+    cheek: new THREE.MeshStandardMaterial({ color: 0xff8fa8, roughness: 0.7, transparent: true, opacity: 0.8 }),
+    white: new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.05 }),
+    iris: new THREE.MeshPhysicalMaterial({ color: 0xe8952a, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.05 }),
+    pupil: new THREE.MeshPhysicalMaterial({ color: 0x120a06, roughness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05 }),
     shine: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-    mouth: new THREE.MeshStandardMaterial({ color: 0x5a2b2b, roughness: 0.6 }),
-    wing: new THREE.MeshStandardMaterial({ color: 0xffd9a6, roughness: 0.6, side: THREE.DoubleSide }),
+    mouth: new THREE.MeshStandardMaterial({ color: 0x4a1f26, roughness: 0.6 }),
+    wing: new THREE.MeshStandardMaterial({ color: 0xff9f43, roughness: 0.5, side: THREE.DoubleSide, transparent: true, opacity: 0.94 }),
+    cape: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.55, side: THREE.DoubleSide }),
     flame: new THREE.MeshStandardMaterial({ color: 0xffb340, emissive: 0xff7a1a, emissiveIntensity: 1, roughness: 0.4 })
   };
   const root = grp();
@@ -632,108 +646,178 @@ function makeDragon() {
   const squash = grp(0, 0, 0, model);    // squash & stretch dari kaki
   const body = grp(0, 0, 0, squash);     // bob & condong
 
-  // Kaki
+  // Kaki dengan sepatu bot merah bermanset emas
   const legs = [-1, 1].map(s => {
-    const L = grp(s * 0.15, 0.24, 0.02, squash);
-    part(G.sphere, M.skin, 0, -0.07, 0, 0.12, 0.13, 0.12, L);
-    part(G.sphere, M.skin, 0, -0.17, 0.05, 0.12, 0.07, 0.15, L);
-    [-0.05, 0, 0.05].forEach(tx => part(G.sphereLo, M.horn, tx, -0.19, 0.19, 0.025, 0.022, 0.03, L));
+    const L = grp(s * 0.14, 0.27, 0, squash);
+    part(G.sphere, M.skin, 0, -0.05, 0, 0.115, 0.13, 0.115, L);
+    part(G.sphere, M.red, 0, -0.16, 0.04, 0.125, 0.105, 0.165, L);
+    part(G.cyl, M.gold, 0, -0.085, 0, 0.122, 0.032, 0.122, L);
+    [-0.05, 0, 0.05].forEach(tx => part(G.sphereLo, M.horn, tx, -0.2, 0.2, 0.022, 0.02, 0.03, L));
     return L;
   });
 
-  // Badan & perut
-  part(G.sphere, M.skin, 0, 0.43, 0, 0.33, 0.34, 0.31, body);
-  part(G.sphere, M.belly, 0, 0.41, 0.15, 0.25, 0.28, 0.18, body);
-  [0.33, 0.43, 0.53].forEach((y, i) => part(G.sphereLo, M.skinDark, 0, y, 0.305 + (i === 1 ? 0.012 : 0), 0.13 - i * 0.015, 0.008, 0.03, body).visible = false);
+  // Badan: dada bidang, perut krem, sabuk emas
+  part(G.sphere, M.skin, 0, 0.45, 0, 0.30, 0.35, 0.27, body);
+  part(G.sphere, M.belly, 0, 0.43, 0.125, 0.22, 0.29, 0.165, body);
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 8, 32), M.red);
+  belt.rotation.x = Math.PI / 2; belt.scale.set(0.287, 0.258, 0.4); belt.position.y = 0.3; body.add(belt);
+  part(G.box, M.gold, 0, 0.3, 0.262, 0.1, 0.075, 0.03, body);
+  part(G.box, M.redDark, 0, 0.3, 0.279, 0.05, 0.04, 0.01, body);
 
-  // Lengan mungil
+  // Emblem petir di dada
+  const emblem = grp(0, 0.55, 0.295, body);
+  emblem.rotation.x = -0.25;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.105, 0.016, 8, 24), M.gold); emblem.add(ring);
+  const disc = part(G.cyl, M.red, 0, 0, 0, 0.1, 0.014, 0.1, emblem); disc.rotation.x = Math.PI / 2;
+  const bs = new THREE.Shape();
+  bs.moveTo(0.02, 0.085); bs.lineTo(-0.06, -0.005); bs.lineTo(-0.012, -0.005); bs.lineTo(-0.035, -0.088); bs.lineTo(0.06, 0.014); bs.lineTo(0.012, 0.014); bs.closePath();
+  const bolt = new THREE.Mesh(new THREE.ExtrudeGeometry(bs, { depth: 0.012, bevelEnabled: false }), M.gold);
+  bolt.position.z = 0.004; emblem.add(bolt);
+
+  // Pelindung bahu emas
+  [-1, 1].forEach(s => {
+    const p = part(G.half, M.gold, s * 0.29, 0.64, 0.05, 0.11, 0.08, 0.11, body);
+    p.rotation.z = -s * 0.45;
+  });
+
+  // Lengan: pelindung emas + sarung tangan merah
   const arms = [-1, 1].map(s => {
-    const A = grp(s * 0.26, 0.5, 0.12, body);
-    part(G.sphere, M.skin, s * 0.02, -0.07, 0.03, 0.07, 0.11, 0.07, A);
-    part(G.sphereLo, M.horn, s * 0.03, -0.16, 0.06, 0.04, 0.035, 0.04, A);
+    const A = grp(s * 0.29, 0.56, 0.07, body);
+    part(G.sphere, M.skin, s * 0.02, -0.07, 0.02, 0.075, 0.12, 0.075, A);
+    part(G.cyl, M.gold, s * 0.03, -0.14, 0.03, 0.085, 0.04, 0.085, A);
+    part(G.sphere, M.red, s * 0.035, -0.2, 0.05, 0.075, 0.07, 0.075, A);
+    [-0.03, 0.03].forEach(cx => part(G.sphereLo, M.horn, s * 0.035 + cx, -0.23, 0.1, 0.02, 0.02, 0.028, A));
     A.rotation.x = -0.3;
     return A;
   });
 
-  // Sayap
+  // Sayap berselaput dengan tulang jari
   const ws = new THREE.Shape();
   ws.moveTo(0, 0);
-  ws.quadraticCurveTo(0.12, 0.3, 0.36, 0.32);
-  ws.quadraticCurveTo(0.3, 0.2, 0.33, 0.12);
-  ws.quadraticCurveTo(0.24, 0.08, 0.24, -0.02);
-  ws.quadraticCurveTo(0.15, -0.02, 0.12, -0.1);
-  ws.quadraticCurveTo(0.06, -0.06, 0, 0);
-  const wingGeo = new THREE.ShapeGeometry(ws, 8);
+  ws.lineTo(0.24, 0.42);
+  ws.quadraticCurveTo(0.45, 0.50, 0.68, 0.40);
+  ws.quadraticCurveTo(0.54, 0.31, 0.57, 0.17);
+  ws.quadraticCurveTo(0.44, 0.20, 0.40, 0.06);
+  ws.quadraticCurveTo(0.27, 0.12, 0.21, -0.04);
+  ws.quadraticCurveTo(0.10, 0.03, 0, 0);
+  const wingGeo = new THREE.ShapeGeometry(ws, 10);
   const wings = [-1, 1].map(s => {
-    const W = grp(s * 0.14, 0.6, -0.2, body);
-    const m = new THREE.Mesh(wingGeo, M.wing);
-    m.scale.set(s * 1.25, 1.25, 1);
-    m.rotation.y = s * 0.55;
-    W.add(m);
-    const bone = part(G.cyl, M.skinDark, s * 0.2, 0.2, -0.05, 0.022, 0.42, 0.022, W);
-    bone.rotation.z = -s * 1.0; bone.rotation.y = s * 0.55;
+    const W = grp(s * 0.13, 0.7, -0.18, body);
+    const pose = grp(0, 0, 0, W);
+    pose.scale.x = s; pose.rotation.y = s * 0.6;
+    pose.add(new THREE.Mesh(wingGeo, M.wing));
+    const wrist = [0.24, 0.42];
+    bone([0, 0], wrist, 0.016, M.skinDark, pose);
+    bone(wrist, [0.66, 0.39], 0.012, M.skinDark, pose);
+    bone(wrist, [0.56, 0.18], 0.01, M.skinDark, pose);
+    bone(wrist, [0.40, 0.07], 0.009, M.skinDark, pose);
+    part(G.sphereLo, M.gold, 0.67, 0.4, 0, 0.022, 0.022, 0.022, pose);
     return W;
   });
 
-  // Duri punggung
-  [[0.74, -0.1, 0.07], [0.62, -0.27, 0.065], [0.46, -0.32, 0.06]].forEach(([y, z, r]) => {
-    const c = part(G.cone, M.skinDark, 0, y, z, r, r * 1.6, r, body);
-    c.rotation.x = -0.9;
-  });
+  // Jubah: gantungan bahu + kain yang dianimasikan
+  const roll = part(G.cyl, M.red, 0, 0.72, -0.2, 0.06, 0.46, 0.06, body); roll.rotation.z = Math.PI / 2;
+  [-1, 1].forEach(s => part(G.sphereLo, M.gold, s * 0.23, 0.72, -0.2, 0.05, 0.05, 0.05, body));
+  const CAPE_C = 8, CAPE_R = 14;
+  const capeGeo = new THREE.PlaneGeometry(1, 1, CAPE_C, CAPE_R);
+  {
+    const col = new Float32Array((CAPE_C + 1) * (CAPE_R + 1) * 3);
+    const c1 = new THREE.Color(0xe02c3d).convertSRGBToLinear(), c2 = new THREE.Color(0x9a1a2c).convertSRGBToLinear(), gold = new THREE.Color(0xffc83d).convertSRGBToLinear();
+    const tmp = new THREE.Color();
+    for (let r = 0; r <= CAPE_R; r++) for (let c = 0; c <= CAPE_C; c++) {
+      const v = r / CAPE_R, u = c / CAPE_C;
+      if (r >= CAPE_R - 1) tmp.copy(gold); else tmp.copy(c1).lerp(c2, v * 0.55 + Math.abs(u - 0.5) * 0.6);
+      const i = (r * (CAPE_C + 1) + c) * 3; col[i] = tmp.r; col[i + 1] = tmp.g; col[i + 2] = tmp.b;
+    }
+    capeGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  }
+  const cape = new THREE.Mesh(capeGeo, M.cape);
+  cape.frustumCulled = false;
+  body.add(cape);
+  function shapeCape(a, wave, t) {
+    const pos = capeGeo.attributes.position, H = 0.5, ca = Math.cos(a), sa = Math.sin(a);
+    for (let r = 0; r <= CAPE_R; r++) {
+      const v = r / CAPE_R;
+      for (let c = 0; c <= CAPE_C; c++) {
+        const u = c / CAPE_C, edge = Math.abs(u * 2 - 1);
+        const len = v * H * (1 - 0.18 * edge * edge * v);
+        const w = 0.34 + 0.42 * v;
+        const rip = Math.sin(t * (7 + wave * 9) + v * 6.5 + u * 3.2) * (0.01 + 0.05 * wave) * v;
+        pos.setXYZ(r * (CAPE_C + 1) + c,
+          (u - 0.5) * w + Math.sin(t * 5 + v * 4) * 0.01 * wave * v,
+          0.72 - len * ca,
+          -0.255 - len * sa - rip - 0.045 * v * (1 - edge * edge));
+      }
+    }
+    pos.needsUpdate = true;
+    capeGeo.computeVertexNormals();
+  }
+  shapeCape(0.14, 0.1, 0);
 
-  // Ekor (rantai bertingkat, ujung membulat)
+  // Duri punggung kecil di bawah jubah & ekor berujung bulat
+  [[0.62, -0.1, 0.05]].forEach(([y, z, r]) => { const c = part(G.cone, M.skinDark, 0, y, z, r, r * 1.5, r, body); c.rotation.x = -0.9; });
   const tail = [];
-  let tp = grp(0, 0.28, -0.24, body);
-  const segs = [[0.15, 0, -0.06], [0.11, 0.05, -0.2], [0.08, 0.11, -0.17]];
-  segs.forEach(([r, y, z], i) => {
+  let tp = grp(0, 0.24, -0.22, body);
+  [[0.15, 0, -0.06], [0.125, 0.04, -0.16], [0.1, 0.08, -0.14]].forEach(([r, y, z], i) => {
     const g = grp(0, i ? y : 0, i ? z : 0, tp);
     part(G.sphere, M.skin, 0, 0, i ? 0 : -0.06, r, r, r * 1.2, g);
     tail.push(g); tp = g;
   });
-  const tipG = grp(0, 0.1, -0.13, tp);
-  const tip = part(G.sphere, M.skinDark, 0, 0, 0, 0.1, 0.1, 0.1, tipG);
+  const tipG = grp(0, 0.07, -0.11, tp);
+  part(G.sphere, M.skinDark, 0, 0, 0, 0.09, 0.09, 0.09, tipG);
   const flame = part(G.cone, M.flame, 0, 0.17, 0, 0.07, 0.2, 0.07, tipG);
   flame.visible = false;
   tail.push(tipG);
 
-  // Kepala
-  const head = grp(0, 0.86, 0.03, body);
-  part(G.sphere, M.skin, 0, 0, 0, 0.37, 0.34, 0.35, head);
-  part(G.sphere, M.snout, 0, -0.11, 0.22, 0.24, 0.17, 0.2, head);
-  [-1, 1].forEach(s => part(G.sphereLo, M.pupil, s * 0.065, -0.06, 0.41, 0.022, 0.016, 0.012, head));
-  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 6, 14, Math.PI), M.mouth);
-  mouth.position.set(0, -0.15, 0.39); mouth.rotation.set(-0.35, 0, Math.PI);
-  head.add(mouth);
-  const fang = part(G.cone, M.white, 0.035, -0.205, 0.37, 0.014, 0.03, 0.014, head);
+  // Kepala: moncong, topeng mata, tanduk emas melengkung, jambul
+  const head = grp(0, 0.93, 0.03, body);
+  part(G.sphere, M.skin, 0, 0, 0, 0.335, 0.31, 0.32, head);
+  part(G.sphere, M.snout, 0, -0.12, 0.25, 0.19, 0.135, 0.2, head);
+  [-1, 1].forEach(s => part(G.sphereLo, M.pupil, s * 0.06, -0.075, 0.435, 0.02, 0.015, 0.012, head));
+  part(G.sphere, M.mouth, 0, -0.158, 0.445, 0.05, 0.011, 0.016, head);
+  [-1, 1].forEach(sx => part(G.sphereLo, M.mouth, sx * 0.052, -0.148, 0.44, 0.013, 0.013, 0.013, head));
+  const fang = part(G.cone, M.white, 0.03, -0.18, 0.437, 0.011, 0.024, 0.011, head);
   fang.rotation.x = Math.PI;
-
+  // topeng
+  part(G.sphere, M.red, 0, 0.03, 0.17, 0.30, 0.105, 0.17, head);
+  [-1, 1].forEach(s => { const m = part(G.cone, M.red, s * 0.31, 0.09, 0.1, 0.04, 0.11, 0.02, head); m.rotation.set(0, s * 0.5, -s * 1.15); });
   const eyes = [-1, 1].map(s => {
-    const E = grp(s * 0.155, 0.04, 0.25, head);
-    E.rotation.y = s * 0.28;
-    part(G.sphere, M.white, 0, 0, 0, 0.11, 0.125, 0.07, E);
-    part(G.sphere, M.iris, 0, -0.005, 0.035, 0.085, 0.1, 0.05, E);
-    part(G.sphere, M.pupil, 0, -0.01, 0.06, 0.055, 0.065, 0.035, E);
-    part(G.sphereLo, M.shine, 0.03, 0.04, 0.095, 0.03, 0.032, 0.012, E);
-    part(G.sphereLo, M.shine, -0.035, -0.04, 0.09, 0.014, 0.014, 0.008, E);
+    const E = grp(s * 0.15, 0.03, 0.285, head);
+    E.rotation.set(0, s * 0.3, s * 0.16);
+    part(G.sphere, M.white, 0, 0, 0, 0.118, 0.135, 0.07, E);
+    part(G.sphere, M.iris, 0, -0.005, 0.032, 0.1, 0.118, 0.055, E);
+    part(G.sphere, M.pupil, 0, -0.008, 0.06, 0.06, 0.075, 0.038, E);
+    part(G.sphereLo, M.shine, 0.036, 0.048, 0.098, 0.034, 0.036, 0.012, E);
+    part(G.sphereLo, M.shine, -0.038, -0.048, 0.092, 0.016, 0.016, 0.008, E);
     return E;
   });
   [-1, 1].forEach(s => {
-    const c = part(G.sphere, M.cheek, s * 0.25, -0.1, 0.21, 0.075, 0.05, 0.03, head);
+    const br = part(G.sphere, M.skinDark, s * 0.16, 0.2, 0.2, 0.11, 0.03, 0.06, head);
+    br.rotation.z = s * 0.3;
+  });
+  [-1, 1].forEach(s => {
+    const c = part(G.sphere, M.cheek, s * 0.23, -0.09, 0.2, 0.05, 0.035, 0.02, head);
     c.rotation.y = s * 0.75;
   });
   [-1, 1].forEach(s => {
-    const h = part(G.cone, M.horn, s * 0.14, 0.31, -0.07, 0.055, 0.17, 0.055, head);
-    h.rotation.set(-0.45, 0, -s * 0.28);
-    const ear = part(G.cone, M.skinDark, s * 0.33, 0.06, -0.06, 0.06, 0.16, 0.035, head);
-    ear.rotation.set(-0.2, 0, -s * 1.3);
+    const hg = grp(s * 0.15, 0.27, -0.04, head);
+    hg.rotation.set(-1.0, 0, -s * 0.28);
+    part(G.cone, M.horn, 0, 0.09, 0, 0.055, 0.18, 0.055, hg);
+    const tg = grp(0, 0.18, 0, hg); tg.rotation.x = -0.6;
+    part(G.cone, M.horn, 0, 0.07, 0, 0.035, 0.15, 0.035, tg);
+    const ear = part(G.cone, M.skinDark, s * 0.34, 0.02, -0.08, 0.06, 0.17, 0.04, head);
+    ear.rotation.set(-0.2, 0, -s * 1.35);
   });
-  const tuft = part(G.cone, M.skinDark, 0, 0.33, 0.05, 0.05, 0.12, 0.05, head);
-  tuft.rotation.x = 0.4;
+  [[0.3, -0.1, 0.05], [0.22, -0.22, 0.045], [0.1, -0.29, 0.04]].forEach(([y, z, r]) => {
+    const c = part(G.cone, M.skinDark, 0, y, z, r, r * 2, r, head); c.rotation.x = -0.8 - (0.3 - y);
+  });
+
+  const aura = glowSprite(0xffe36b, 2.6, 0.34); aura.position.set(0, 0.6, 0); aura.visible = false; body.add(aura);
 
   model.scale.setScalar(0.92);
   shadowAll(root);
 
-  const A = { t: 0, phase: 0, blink: 2, blinking: 0, yaw: 1, land: 0, wingPhase: 0, sparkT: 0 };
+  const A = { t: 0, phase: 0, blink: 2, blinking: 0, yaw: 1, capeA: 0.14, wave: 0.1, sparkT: 0 };
   function update(dt, s) {
     A.t += dt;
     const t = A.t;
@@ -747,16 +831,16 @@ function makeDragon() {
     eyes.forEach(e => e.scale.y = damp(e.scale.y, eyeY, 40, dt));
 
     // arah hadap (3/4 menghadap kamera agar wajah tetap terlihat)
-    let yawT = s.facing > 0 ? 1.05 : -1.05;
+    let yawT = s.facing > 0 ? 0.85 : -0.85;
     if (s.state === 'win' || s.state === 'dead' || s.state === 'title') yawT = s.state === 'title' ? 0.35 + Math.sin(t * 0.6) * 0.15 : 0;
     A.yaw = damp(A.yaw, yawT, 14, dt);
     root.rotation.y = A.yaw;
 
     // skala power-up
-    const sc = (s.powered ? 1.12 : 0.92) * (s.grow ? 1 + Math.sin(s.grow * 40) * 0.08 : 1);
+    const sc = (s.powered ? 1.1 : 0.92) * (s.grow ? 1 + Math.sin(s.grow * 40) * 0.08 : 1);
     model.scale.setScalar(damp(model.scale.x, sc, 10, dt));
-    flame.visible = !!s.powered;
-    if (s.powered) { flame.scale.set(0.07, 0.2 + Math.sin(t * 30) * 0.04, 0.07); }
+    flame.visible = !!s.powered; aura.visible = !!s.powered;
+    if (s.powered) { flame.scale.set(0.07, 0.2 + Math.sin(t * 30) * 0.04, 0.07); aura.material.opacity = 0.3 + Math.sin(t * 8) * 0.08; }
     setLin(M.skin.emissive, s.flash ? 0xff3355 : s.powered ? 0x2f6b20 : 0x000000);
     M.skin.emissiveIntensity = s.flash ? 0.6 : 0.25;
 
@@ -781,15 +865,16 @@ function makeDragon() {
         bob = Math.abs(Math.sin(ph)) * 0.05; roll = Math.sin(ph) * 0.05;
         lean = s.state === 'run' ? 0.22 : 0.08; headX = -lean * 0.5;
         tailAmp = 0.45; tailSpd = 6 + Math.abs(s.vx);
-        wingY = s.state === 'run' ? Math.sin(t * 16) * 0.45 : Math.sin(t * 6) * 0.2;
+        wingY = s.state === 'run' ? Math.sin(t * 16) * 0.3 : Math.sin(t * 6) * 0.14;
         break;
       case 'jump':
-        legX = [-0.7, -0.4]; armX = [-1.6, -1.6]; armZ = [0.5, 0.5]; headX = -0.15;
-        wingY = -0.5 + Math.sin(t * 22) * 0.6; wingZ = 0.3; tailAmp = 0.15; tailSpd = 4;
+        // pose terbang superhero: satu tangan terangkat ke depan
+        legX = [-0.7, -0.4]; armX = [-1.6, -2.7]; armZ = [0.4, 0.1]; headX = -0.15; lean = 0.2;
+        wingY = 0.35 + Math.sin(t * 22) * 0.4; wingZ = 0.3; tailAmp = 0.15; tailSpd = 4;
         break;
       case 'fall':
         legX = [0.3, -0.2]; armX = [-2.2, -2.2]; armZ = [0.7, 0.7]; headX = 0.1;
-        wingY = Math.sin(t * 28) * 0.75; wingZ = 0.4; tailAmp = 0.5; tailSpd = 10;
+        wingY = Math.sin(t * 28) * 0.5; wingZ = 0.5; tailAmp = 0.5; tailSpd = 10;
         break;
       case 'hurt':
         roll = Math.sin(t * 40) * 0.25; armX = [-2.4, -2.4]; armZ = [0.9, 0.9]; legX = [0.6, -0.6];
@@ -797,19 +882,20 @@ function makeDragon() {
       case 'win': {
         const hop = Math.abs(Math.sin(t * 6));
         bob = hop * 0.35; armX = [-2.8 + Math.sin(t * 12) * 0.3, -2.8 - Math.sin(t * 12) * 0.3]; armZ = [0.6, 0.6];
-        wingY = Math.sin(t * 20) * 0.7; wingZ = 0.5; headZ = Math.sin(t * 6) * 0.15; tailAmp = 0.6; tailSpd = 12;
+        wingY = Math.sin(t * 20) * 0.45; wingZ = 0.7; headZ = Math.sin(t * 6) * 0.15; tailAmp = 0.6; tailSpd = 12;
         legX = [-hop * 0.5, -hop * 0.5];
         break;
       }
       case 'dead':
-        armX = [-2.8, -2.8]; armZ = [1, 1]; headX = -0.2; roll = Math.sin(t * 8) * 0.2; wingY = Math.sin(t * 30) * 0.6;
+        armX = [-2.8, -2.8]; armZ = [1, 1]; headX = -0.2; roll = Math.sin(t * 8) * 0.2; wingY = Math.sin(t * 30) * 0.4;
         break;
       case 'title':
-        armX = [-0.4 + Math.sin(t * 2) * 0.1, -2.6 + Math.sin(t * 9) * 0.35]; armZ = [0, 0.4];
-        headZ = Math.sin(t * 1.5) * 0.12; headX = Math.sin(t * 1.1) * 0.05; tailAmp = 0.45;
+        // pose pahlawan: satu tangan di pinggang, satu tinju terangkat
+        armX = [-0.15, -2.7 + Math.sin(t * 2) * 0.12]; armZ = [0.7, 0.35];
+        headZ = Math.sin(t * 1.5) * 0.08; headX = -0.06; tailAmp = 0.45; wingZ = 0.45; wingY = Math.sin(t * 2.4) * 0.1;
         break;
-      default: // idle
-        headZ = Math.sin(t * 1.3) * 0.06; headX = Math.sin(t * 0.9) * 0.04;
+      default: // idle: berdiri tegap
+        headZ = Math.sin(t * 1.3) * 0.05; headX = Math.sin(t * 0.9) * 0.03; wingZ = 0.12;
         armX = [-0.3 + Math.sin(t * 2.6) * 0.06, -0.3 + Math.sin(t * 2.6) * 0.06];
     }
     const k = 18;
@@ -820,8 +906,21 @@ function makeDragon() {
     body.rotation.z = damp(body.rotation.z, roll, 14, dt);
     head.rotation.x = damp(head.rotation.x, headX, 10, dt);
     head.rotation.z = damp(head.rotation.z, headZ, 10, dt);
-    wings.forEach((w, i) => { const sg = i ? 1 : -1; w.rotation.y = sg * wingY; w.rotation.z = sg * -wingZ; });
+    wings.forEach((w, i) => { const sg = i ? 1 : -1; w.rotation.z = damp(w.rotation.z, sg * (wingY * 0.8 + wingZ * 0.8 + 0.05), 20, dt); });
     tail.forEach((g, i) => { g.rotation.y = Math.sin(t * tailSpd - i * 0.7) * tailAmp; g.rotation.x = i ? -0.15 : 0.1; });
+
+    // jubah berkibar: makin cepat, makin melambai ke belakang
+    const stream = clamp(Math.abs(s.vx) / 9.6, 0, 1);
+    let capeT = 0.14 + Math.sin(t * 1.6) * 0.025, wave = 0.1;
+    if (moving) { capeT = 0.14 + stream * 0.95; wave = 0.25 + stream * 0.75; }
+    else if (s.state === 'jump') { capeT = 0.55 + stream * 0.4; wave = 0.8; }
+    else if (s.state === 'fall') { capeT = 0.2 + stream * 0.5; wave = 1; }
+    else if (s.state === 'win') { capeT = 0.35; wave = 0.7; }
+    else if (s.state === 'hurt') { capeT = 0.95; wave = 1; }
+    else if (s.state === 'dead') { capeT = 0.25; wave = 0.3; }
+    else if (s.state === 'title') { capeT = 0.3; wave = 0.45; }
+    A.capeA = damp(A.capeA, capeT, 9, dt); A.wave = damp(A.wave, wave, 8, dt);
+    shapeCape(A.capeA, A.wave, t);
 
     // kilau buah ajaib
     if (s.powered && s.world) {
